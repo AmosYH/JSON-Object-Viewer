@@ -29,8 +29,8 @@ import model.MasterExcelBean;
 
 //import com.hkbea.db_housekeep.batch.DB_Housekeep;
 
-import object.EmailObject; 
-
+import object.EmailObject;
+import setting.EmailStaff;
 import setting.EmailUtil;
 import setting.LogController;
 import util.CommonUtil;
@@ -45,17 +45,38 @@ public class main {
 		LogController.createLogFile();
 	}
 	public static void main(String[] args){
-		//sendNotifyEmail("Start");
 		LogController.writeMessage(LogController.DEBUG, "Start AOP Backup Support Program");
 		LogController.writeMessage(LogController.DEBUG, "Start time: " + new Timestamp(new Date().getTime()));
 		ArrayList<MasterExcelBean> datas = null;
-		
+		JSONObject json = null;
+		MasterExcelBean meb = null;
+		String fromDate ="";
+		String toDate="";
 		try{
+			if (args.length > 0 && args.length == 2) {
+				fromDate 		= args[0]+" 00:00:00";
+				toDate 		    = args[1]+" 23:59:59";
+				System.out.println("fromDate: "+fromDate);
+				System.out.println("toDate: "+toDate);
+			} else {
+				LogController.writeMessage("Program Exit due to incorrect parameters");
+				System.exit(1);
+			}
+			
 			datas = new ArrayList<>();
-		    JSONObject json = readJsonFromUrl(args);
+		    json = readJsonFromUrl(fromDate,toDate);
+		    if (!json.has("dataList")) {
+		    	String responseCode = "";
+		    	if ("{}".equals(json.toString())) {
+		    		responseCode = "not 200";
+		    	} else {
+		    		responseCode = "200";
+		    	}
+		    	sendErrorEmail("Response Code: " + responseCode + "\nJSONObject[\"dataList\"] not found in returned JSON: " + json.toString());
+		    }
 		    int JSONLength = json.getJSONArray("dataList").length();
 		    LogController.writeMessage(LogController.DEBUG, "json length: " + JSONLength);
-		    MasterExcelBean meb = null;
+		    
 		    for (int i = 0; i < JSONLength; i++) {
 		    	String appDataJson = json.getJSONArray("dataList").getJSONObject(i).getString("appDataJson");
 		    	meb = CheckApplication.collectMaterBean(appDataJson, "success");
@@ -65,7 +86,7 @@ public class main {
 	    	StringBuilder sb = new StringBuilder();
 	    	String[] colHeaderList = null;
 	    	colHeaderList = new String[]{"New Arrival Date/Time","Batch","Run","Reference ID","Customer Name","HKID","Mobile Phone","Email Address","Referral Code","Language","IDV Rejected (if Yes \"Y\")","Completion Date","Status","Reject Reason"
-	    			,"Account No.","eCARA Ref. No.","eCARA Form Status","eCARA Reason Code","Product Type","Securities A/C","Linked Deposit A/C","DK video","Use of deposit Information","MAO value","AIO Open Date","Securities A/C Open Date","Linked Deposit A/C Open Date"};
+	    			,"Account No.","eCARA Ref. No.","eCARA Form Status","eCARA Reason Code","Product Type","Securities A/C","Linked Deposit A/C","DK video","Use of deposit Information","WMC value","AIO Open Date","Securities A/C Open Date","Linked Deposit A/C Open Date"};
 	    	String colHeaderString = "";
 	    	for(String headerItem : colHeaderList){
 				colHeaderString = String.valueOf(colHeaderString) + headerItem + ",";
@@ -76,7 +97,7 @@ public class main {
 	    	boolean split = false;
 	    	for(MasterExcelBean data :datas){
 				String colValue = "";
-				colValue += data.getCompletedDate()+",";
+				colValue += data.getNewArrivalDateTime()+",";
 				colValue += data.getBatch()+",";
 				colValue += data.getRunTime()+",";
 				colValue += data.getReferenceID()+",";
@@ -91,15 +112,15 @@ public class main {
 				colValue += data.getStatus()+",";
 				colValue += data.getRejectReason()+",";
 				colValue += data.getAccountNo()+",";
-				colValue += ","; //ecara1
-				colValue += ","; //ecara2
-				colValue += ","; //ecara3
+				colValue += ","; // (eCARA Ref. No.)
+				colValue += ","; // (eCARA Form Status)
+				colValue += ","; // (eCARA Reason Code)
 				colValue += data.getProductType()+",";
 				colValue += data.getIsSecuritiesAC()+",";
 				colValue += data.getIsLinkedDepositAC()+",";
 				colValue += data.getDkVideo()+",";
 				colValue += data.getUseOfDepositInfo()+",";
-				colValue += data.getIsMao()+",";
+				colValue += data.getIsWmc()+",";
 				colValue += ","; //tbc
 				colValue += ","; //tbc
 				colValue += ","; //tbc
@@ -122,29 +143,15 @@ public class main {
 	        }
 			LogController.writeMessage(LogController.DEBUG, "End the file' loop  total file time: "+ new Timestamp(new Date().getTime()));
 			
-		} catch(Exception e){
+		} catch(JSONException e) {
+			LogController.writeExceptionMessage(LogController.INFO, e);
+		} catch(Exception e) {
 			LogController.writeExceptionMessage(LogController.ERROR, e);
-		} finally{
-			
-		}
+		} 
 		
-		//sendNotifyEmail("End");
 		LogController.writeMessage(LogController.DEBUG, "Finish AOP Backup Support Program");
 		LogController.writeMessage(LogController.DEBUG, "End time: " + new Timestamp(new Date().getTime()));
 		
-	}
-
-	private static void sendNotifyEmail(String status){
-		EmailObject email  = new EmailObject();
-		String subject = email.getSubject();
-		if("Start".equals(status))
-			subject += " Start";
-		else {
-			subject += " End";
-			//email.setSbText(email.getSbText().append());
-		}
-		email.setSubject(subject);
-		EmailUtil.sendEmail(email);
 	}
 	
     private static void createCSVFile(final StringBuilder stringBuilder, final String fileName) throws FileNotFoundException {
@@ -163,20 +170,18 @@ public class main {
     private static String getConfigProperty(final String key) {
         final String tmepVal = Utility.getProperty(key);
         if ("".equals(tmepVal) && tmepVal.length() < 0) {
-            LogController.writeMessage("ERROR", "GetConfigProperty Fail  : " + key);
+            LogController.writeMessage("ERROR", "GetConfigProperty Fail: " + key);
             return null;
         }
         return tmepVal;
     }
 	
-    private static JSONObject readJsonFromUrl(String[] args) throws IOException, JSONException {
+    private static JSONObject readJsonFromUrl(String fromDate, String toDate) throws IOException, JSONException {
 		 int count = 1;
 		 int maxRetryCount = 4;
-		 String fromDate = args[0];
-		 String toDate = args[1];
 		 String jsonInputString = "{" + 
-		 		"    \"pazzPhase\": \"UPUPDOWNDOWNAABB\"," + 
-		 		"    \"productType\": null," + 
+		 		"    \"pazzPhase\": \"" + Utility.getProperty("pazzPhase") + "\"," + 
+		 		"    \"productType\": \"WMCSB\"," + 
 		 		"    \"fromDate\": \" " + fromDate + " \"," + 
 		 		"    \"toDate\": \" " + toDate + " \"" + 
 		 		"}";
@@ -186,7 +191,7 @@ public class main {
 			 try {
 				URL url = new URL("https://hkgaopvt-01/aop/backupSupport/getNewRecords");
 				 
-				LogController.writeMessage(LogController.INFO, "", "main", "readJsonFromUrl", "url:"+url);
+				LogController.writeMessage(LogController.INFO, "", "main", "readJsonFromUrl", "url: "+url);
 				 
 				HttpsURLConnection con = (HttpsURLConnection) url.openConnection();
 				con.setRequestMethod("POST");
@@ -216,7 +221,7 @@ public class main {
 				count++;
 				if (count == maxRetryCount) {
 					LogController.writeMessage(LogController.ERROR, "main", "readJsonFromUrl", "exception thrown: " + e.toString());
-					LogController.writeMessage(LogController.INFO, "", "main", "readJsonFromUrl", "response not 200 occurred max count, JSON empty");
+					LogController.writeMessage(LogController.INFO, "", "main", "readJsonFromUrl", "response not 200, all retry chances have been used, JSON is still empty");
 					return new JSONObject("{}");
 				} else {
 					LogController.writeMessage(LogController.ERROR, "main", "readJsonFromUrl", "exception thrown: " + e.toString());
@@ -226,7 +231,7 @@ public class main {
 		 }		 
 	}
 
-	 private static String readAll(Reader rd) throws IOException {
+	private static String readAll(Reader rd) throws IOException {
 		StringBuilder sb = new StringBuilder();
 		int cp;
 		while ((cp = rd.read()) != -1) {
@@ -234,4 +239,16 @@ public class main {
 		}
 		return sb.toString();
 	}
+
+	private static void sendErrorEmail(String message) {
+		EmailObject email = new EmailObject();
+		email.setSubject(Utility.getProperty("error_email_title"));
+		email.setMailTo(EmailStaff.getEmailStaff("Error_Log_TO"));
+		email.setMailCc(EmailStaff.getEmailStaff("Error_Log_CC"));
+		email.setSbText(new StringBuffer(message));
+		email.setRetryNum(3);
+		email.setMailFormat(EmailUtil.Format_Text);
+		EmailUtil.sendEmail(email);
+	}
+	 
 }

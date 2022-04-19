@@ -10,7 +10,9 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.Properties;
 
+import object.EmailObject;
 import util.CommonUtil;
+import util.Utility;
 
 public class LogController {
 	public static final String DEBUG = "DEBUG";
@@ -28,7 +30,7 @@ public class LogController {
 			logLevel = CommonUtil.getProperty(logProperties, "log_level");
 		}
 		catch(Exception e){
-			System.err.println(e.getMessage());
+			LogController.writeExceptionMessage(LogController.ERROR, e);
 		}
 	}
 	/**
@@ -55,7 +57,18 @@ public class LogController {
 		for(int i = 0; i < msg.length; i ++) {
 			message += msg[i] + "\r\n";
 		}
-		
+		// Send error log to WHP SIC
+		if (ERROR.equals(logType)){
+			
+			EmailObject email = new EmailObject();
+			email.setSubject(Utility.getProperty("error_email_title"));
+			email.setMailTo(EmailStaff.getEmailStaff("Error_Log_TO"));
+			email.setMailCc(EmailStaff.getEmailStaff("Error_Log_CC"));
+			email.setSbText(new StringBuffer(message));
+			email.setRetryNum(3);
+			email.setMailFormat(EmailUtil.Format_Text);
+			EmailUtil.sendEmail(email);
+		}
 		System.out.print(message);
 	}
 	

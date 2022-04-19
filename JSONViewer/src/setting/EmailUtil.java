@@ -44,8 +44,8 @@ public class EmailUtil{
 			
 			smtpHost = CommonUtil.getProperty(emailProperties, "smtpHost", "localhost");
 			smtpPort = CommonUtil.getProperty(emailProperties, "smtpPort", 25);
-			smtpUser = CommonUtil.getProperty(emailProperties, "smtpUser", "");
-			smtpPasswd = CommonUtil.getProperty(emailProperties, "smtpPasswd", "");
+			smtpUser = "";
+			smtpPasswd = "";
 			emailPrefix = CommonUtil.getProperty(emailProperties, "emailPrefix", "");
 			
 			authorisedDomain = CommonUtil.getProperty(emailProperties, "authorisedDomain", "");

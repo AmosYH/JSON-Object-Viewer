@@ -21,7 +21,7 @@ public class CommonUtil {
 	public static String getProperty(Properties properties, String key) {
         final String tmepVal = properties.getProperty(key);
         if (ckValueNull(tmepVal)) {
-        	LogController.writeMessage("GetProperty Fail  : " + key);
+        	LogController.writeMessage("GetProperty Fail: " + key);
             return null;
         }
         return tmepVal.trim();

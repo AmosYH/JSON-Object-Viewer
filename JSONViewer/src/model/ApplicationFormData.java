@@ -242,9 +242,9 @@ public class ApplicationFormData implements Serializable {
 	}
 
 	/**
-	 * IsMao of Applicant
+	 * IsWmc of Applicant
 	 * 
-	 * @return isMao
+	 * @return isWmc
 	 **/
 	public String getProductType() {
 		return productType;

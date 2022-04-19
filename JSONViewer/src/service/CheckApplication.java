@@ -33,7 +33,6 @@ public class CheckApplication {
 		classMap.put("applicationDetail", ApplicationDetail.class);
 		classMap.put("residentialAddress", ApplicationAddress.class);
 		classMap.put("correspondenceAddress", ApplicationAddress.class);
-		//classMap.put("productSpecificInformation", ProductSpecificInformation.class);
 		classMap.put("chinaBranch", BranchDetail.class);
 		classMap.put("hkBranch", BranchDetail.class);
 		ApplicationFormData appData = (ApplicationFormData) JSONObject.toBean(jsonobject, ApplicationFormData.class,
@@ -54,7 +53,7 @@ public class CheckApplication {
 		masterExcelBean.setRejectReason(getReason(statusCode));
 		//new
 		masterExcelBean.setAccountNo(appData.getAccountNumber());
-		masterExcelBean.setIsMao("WMCSB".equals(appData.getApplicationDetail().getProductType()) ? "Y" : "N"); //changed from "MAO" to "WMCSB"
+		masterExcelBean.setIsWmc("WMCSB".equals(appData.getApplicationDetail().getProductType()) ? "Y" : "N"); //changed from "MAO" to "WMCSB"
 		masterExcelBean.setIsSecuritiesAC(Boolean.TRUE.equals(appData.getApplicationDetail().getOpenSecuritiesAccount()) ? "Y" : "N");
 		masterExcelBean.setIsLinkedDepositAC(Boolean.TRUE.equals(appData.getApplicationDetail().getOpenLDAccount())? "Y" : "N");
 		masterExcelBean.setLoginAccountType(appData.getLoginAccountType());
@@ -63,35 +62,25 @@ public class CheckApplication {
 		//masterExcelBean.setReferrerCode(appData.getApplicationDetail().getReferrerCode());
 		
 		String productType = appData.getApplicationDetail().getProductType();
-		String parsedProductType = null;
 		String dkVideoFlagDisplay = "";
 		String useOfDepositInfoDisplay = "";
-		
-		if (CodConstant.APPLICATION_DETAIL_PRODUCT_TYPE_MAO.equals(productType)) {
-			parsedProductType = "MAO";
-		} else if (CodConstant.APPLICATION_DETAIL_PRODUCT_TYPE_IAO.equals(productType)) {
-			parsedProductType = "IAO (ETB)";
 
-			// These fields do not exist in MAO
-			boolean dkVideoFlag = (!Boolean.TRUE.equals(appData.getDerivative033Flag())
-					&& !Boolean.TRUE.equals(appData.getDerivative034Flag()) && !Boolean.TRUE.equals(appData.getDerivative035Flag()))
-					|| (Boolean.TRUE.equals(appData.getApplicationDetail().getDkDeclaration1()
-							&& Boolean.TRUE.equals(appData.getApplicationDetail().getDkDeclaration2())));
+		// These fields do not exist in MAO
+		boolean dkVideoFlag = (!Boolean.TRUE.equals(appData.getDerivative033Flag())
+				&& !Boolean.TRUE.equals(appData.getDerivative034Flag()) && !Boolean.TRUE.equals(appData.getDerivative035Flag()))
+				|| (Boolean.TRUE.equals(appData.getApplicationDetail().getDkDeclaration1()
+						&& Boolean.TRUE.equals(appData.getApplicationDetail().getDkDeclaration2())));
 
-			dkVideoFlagDisplay = (dkVideoFlag ? "Y" : "N");
-			useOfDepositInfoDisplay = Boolean.TRUE.equals(appData.getApplicationDetail().getTradingConsentAgree()) ? "Agree" : "Disagree";
-		} else {
-			parsedProductType = productType;
-		}
+		dkVideoFlagDisplay = (dkVideoFlag ? "Y" : "N");
+		useOfDepositInfoDisplay = Boolean.TRUE.equals(appData.getApplicationDetail().getTradingConsentAgree()) ? "Agree" : "Disagree";
 
 		masterExcelBean.setProductType(productType);
-		masterExcelBean.setParsedProductType(parsedProductType);
 		masterExcelBean.setDkVideo(dkVideoFlagDisplay);
 		masterExcelBean.setUseOfDepositInfo(useOfDepositInfoDisplay);
 		
 		//changed from "MAO" to "WMCSB"
 		if ("WMCSB".equals(appData.getApplicationDetail().getProductType())) {// set completed date with all account opened
-			if ("Y".equals(masterExcelBean.getIsMao())) {
+			if ("Y".equals(masterExcelBean.getIsWmc())) {
 				masterExcelBean.setOpenDateMao((statusCode == 1) ? DateTimeFormatter.ofPattern("yyyy-MM-dd").format(LocalDate.now()) : "");
 			}
 

@@ -22,7 +22,7 @@ public class MasterExcelBean implements Serializable {
 	private String runTime;
 
 	private String accountNo;
-	private String isMao;
+	private String isWmc;
 	private String openDateMao;
 	private String isSecuritiesAC;
 	private String openDateSecuritiesAC;
@@ -31,7 +31,6 @@ public class MasterExcelBean implements Serializable {
 	private String loginAccountType;
 
 	private String productType;
-	private String parsedProductType;
 	private String dkVideo;
 	private String useOfDepositInfo;
 	
@@ -158,12 +157,12 @@ public class MasterExcelBean implements Serializable {
 		this.accountNo = accountNo;
 	}
 
-	public String getIsMao() {
-		return isMao;
+	public String getIsWmc() {
+		return isWmc;
 	}
 
-	public void setIsMao(String isMao) {
-		this.isMao = isMao;
+	public void setIsWmc(String isWmc) {
+		this.isWmc = isWmc;
 	}
 
 	public String getOpenDateMao() {
@@ -222,14 +221,6 @@ public class MasterExcelBean implements Serializable {
 		this.productType = productType;
 	}
 
-	public String getParsedProductType() {
-		return parsedProductType;
-	}
-
-	public void setParsedProductType(String parsedProductType) {
-		this.parsedProductType = parsedProductType;
-	}
-
 	public String getDkVideo() {
 		return dkVideo;
 	}
@@ -260,10 +251,10 @@ public class MasterExcelBean implements Serializable {
 				+ hkid + ", mobilePhone=" + mobilePhone + ", emailAddress=" + emailAddress + ", referralCode=" + referralCode
 				+ ", language=" + language + ", newArrivalDateTime=" + newArrivalDateTime + ", batch=" + batch + ", completedDate="
 				+ completedDate + ", status=" + status + ", rejectReason=" + rejectReason + ", runTime=" + runTime + ", accountNo="
-				+ accountNo + ", isMao=" + isMao + ", openDateMao=" + openDateMao + ", isSecuritiesAC=" + isSecuritiesAC
+				+ accountNo + ", isWmc=" + isWmc + ", openDateMao=" + openDateMao + ", isSecuritiesAC=" + isSecuritiesAC
 				+ ", openDateSecuritiesAC=" + openDateSecuritiesAC + ", isLinkedDepositAC=" + isLinkedDepositAC
 				+ ", openDateLinkedDepositAC=" + openDateLinkedDepositAC + ", loginAccountType=" + loginAccountType + ", productType="
-				+ productType + ", parsedProductType=" + parsedProductType + ", dkVideo=" + dkVideo + ", useOfDepositInfo="
+				+ productType + ", dkVideo=" + dkVideo + ", useOfDepositInfo="
 				+ useOfDepositInfo + ", referrerCode=" + referrerCode + "]";
 	}
 
